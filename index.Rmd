@@ -1,0 +1,219 @@
+---
+title: "index"
+output: html_document
+date: "2024-11-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(dplyr)
+library(ggplot2)
+
+# install googlesheets4 if not installed already
+if(!"googlesheets4" %in% installed.packages()[ ,"Package"]) {
+  install.packages("googlesheets4")
+} 
+library(googlesheets4)
+
+#install showtext if not installed already
+if(!"showtext" %in% installed.packages()[ ,"Package"]) {
+  install.packages("showtext")
+} 
+library(showtext)
+```
+
+## Load Data
+
+```{r}
+
+# load heart rate google sheet
+
+heartRate= read_sheet('https://docs.google.com/spreadsheets/d/1zoV4IGYR2Lr7VZV4mJwCslphvym3yD8anXt7cJ_Yhjw/edit?gid=0#gid=0')
+
+# load qualtrics data google sheet
+
+ASRSscores= read_sheet('https://docs.google.com/spreadsheets/d/18VtUgG987tZLIG8mLXtAR5k2FWN836wPT-T5iGaddPc/edit?gid=0#gid=0')                
+
+```
+
+## Wrangle Data
+
+```{r}
+
+##### Heart Rate #####
+
+# removing empty column and notes column
+heartRate = heartRate %>%
+  select(Participant, HeartRate1, HeartRate2, HeartRate3)
+
+# remove text from heart rate 2
+heartRate$HeartRate2[heartRate$HeartRate2== "66 (trimmed average)"] = "66"
+
+# check if columns are numeric
+sapply(heartRate, class)
+
+# make heart rate 2 numeric
+heartRate$HeartRate2= as.numeric(heartRate$HeartRate2)
+
+# check that heart rate 2 is now numeric
+is.numeric(heartRate$HeartRate2)
+
+
+##### ASRS scores #####
+
+# only keep participant ID and ASRS score columns
+ASRSscores= ASRSscores %>%
+  select(Q23, Q1, Q2, Q3, Q4, Q5, Q6) %>%
+  
+  # remove questions and practice responses
+  slice(5:64)
+
+# change data to numeric
+ASRSscores[] = sapply(ASRSscores, as.numeric)
+
+# check that all columns are numeric
+sapply(ASRSscores, class)
+
+# fix participant ID mistakes
+ASRSscores[8, 1]= 1 
+ASRSscores[4, 1]= 6 
+ASRSscores[5, 1]= 7
+ASRSscores[6, 1]= 8
+## could create for loop to +1 from 4,1 to 6,1
+
+# participant IDs in ascending order
+ASRSscores = arrange(ASRSscores, Q23)
+
+# total ASRS scores
+ASRSscores= ASRSscores %>%
+  mutate(ASRStotal= Q1 + Q2 + Q3 + Q4 + Q5 + Q6) %>%
+  
+  # split participants into high and low ADHD traits
+  mutate(ADHDtraits = case_when(
+    ASRStotal < 4 ~ "low",
+    TRUE ~ "high"
+  )) %>%
+  
+  #  remove individual and totalled ASRS score columns
+  select(Q23, ADHDtraits) %>%
+  
+  # rename column
+  rename(Participant= Q23)
+
+
+##### Combined Data #####
+
+# combine data frames
+combinedData= left_join(heartRate, ASRSscores, by= c("Participant")) %>%
+  
+  # remove participant 1, 9 and 25 for data collection problems
+  slice(2:8, 10:24, 26:60)
+
+# calculate pre-, peri- and post-task means and SDs for both groups
+groupedData= combinedData %>%
+  group_by(ADHDtraits) %>%
+  summarise(HRbefore= mean(HeartRate1),
+            HRduring= mean(HeartRate2),
+            HRafter= mean(HeartRate3),
+            SDbefore= sd(HeartRate1),
+            SDduring= sd(HeartRate2),
+            SDafter= sd(HeartRate3),
+            .groups = 'drop')
+##might be easier to start them as 2 separate data frames, then pivot, then combine?
+
+# pivot mean data
+meanData= groupedData %>% 
+  select(- SDbefore,- SDduring,- SDafter) %>%
+  pivot_longer(cols= HRbefore:HRafter,
+                names_to= "TimePoint", 
+                values_to= "HRmean") %>%
+  
+  #change time point values
+   mutate(TimePoint= case_when(
+    TimePoint== "HRbefore" ~ "before",
+    TimePoint== "HRduring" ~ "during",
+    TRUE ~ "after"
+  ))
+
+# pivot SD data
+SDdata= groupedData %>%
+  select(- HRbefore,- HRduring,- HRafter) %>%
+  pivot_longer(cols= SDbefore:SDafter,
+                names_to= "TimePoint", 
+                values_to= "HRsd") %>%
+  
+  #change time point values
+   mutate(TimePoint= case_when(
+    TimePoint== "SDbefore" ~ "before",
+    TimePoint== "SDduring" ~ "during",
+    TRUE ~ "after"
+  ))
+
+# join pivoted data frames
+summariseData= left_join(meanData, SDdata, by= c("ADHDtraits",
+                                                 "TimePoint")) 
+
+```
+
+## Visualise Data
+
+```{r}
+
+##### Bar Chart #####
+
+# order IVs
+summariseData$TimePoint= factor(summariseData$TimePoint, 
+                            levels= c("before", "during", "after"))
+summariseData$ADHDtraits= factor(summariseData$ADHDtraits,
+                            levels= c("low", "high"))
+
+# create grouped bar chart
+ggplot(summariseData, aes(x= ADHDtraits, y= HRmean, fill= TimePoint)) +
+  geom_bar(stat= "identity",
+           position= "dodge",
+           
+           # add outline to bars
+           colour= "black") +
+  
+  # label axes
+  xlab("Level of ADHD Traits") +
+  ylab("Mean Heart Rate") +
+  
+  # change legend title
+  labs(fill = "Time Point") +
+  
+  # add title
+  ggtitle("Heart Rate Pre-, Peri- and Post-Negative Emotion Induction by Level of ADHD Traits") +
+  
+  # start y axis at 50
+  coord_cartesian(ylim = c(50, NA)) +
+  
+  # change bar colours
+  scale_fill_hue(c = 60) +
+  scale_fill_brewer(palette= "Reds") +
+  
+  # change background
+  theme(panel.background = element_blank(),
+        
+        # add axis lines
+        axis.line= element_line(colour= "black"),
+        
+        # change font
+        text = element_text(family = "sans"),
+        
+        # centre title
+        plot.title = element_text(hjust = 0.5)) +
+  
+  # add sd error bars
+   geom_errorbar(aes(x= ADHDtraits, ymin=HRmean-HRsd, ymax=HRmean+HRsd),
+                 width=.4,
+                 position=position_dodge(.9))
+  
+# save to output folder
+
+
+```
+
+
