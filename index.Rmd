@@ -3,6 +3,13 @@ title: "index"
 output: html_document
 date: "2024-11-11"
 ---
+# Do people with high ADHD traits have more reactive physiological emotional responses compared to people with low ADHD traits?
+
+## Load Libraries
+
+The libraries required for this code are tidyverse, here, dplyr, ggplot2, ggiraph, htmlwidgets and readxl. 
+
+The packages were built under R version 4.3.3.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -11,40 +18,63 @@ library(here)
 library(dplyr)
 library(ggplot2)
 
-# install googlesheets4 if not installed already
-if(!"googlesheets4" %in% installed.packages()[ ,"Package"]) {
-  install.packages("googlesheets4")
+# install ggiraph if not installed already
+if(!"ggiraph" %in% installed.packages()[ ,"Package"]) {
+  install.packages("ggiraph")
 } 
-library(googlesheets4)
+library(ggiraph)
 
-#install showtext if not installed already
-if(!"showtext" %in% installed.packages()[ ,"Package"]) {
-  install.packages("showtext")
+# install htmlwidgets if not installed already
+if(!"htmlwidgets" %in% installed.packages()[ ,"Package"]) {
+  install.packages("htmlwidgets")
 } 
-library(showtext)
+library(htmlwidgets)
+
+# install readxl if not installed already
+if(!"readxl" %in% installed.packages()[ ,"Package"]) {
+  install.packages("readxl")
+} 
+library(readxl)
+
 ```
 
 ## Load Data
 
+The data used for this visualization is from my dissertation project that I completed last year. We collected data from 60 current University of Sheffield students in one individual session for each participant.
+
+ADHD traits were measured using section A from the Adult ADHD Self-Report Scale v1.1 (Kessler et al., 2005). This consists of six Likert scale questions that are answered on a scale from "strongly agree" to "strongly disagree". Participants are given either one point or zero points for each question based on their response. The responses are totalled out of six, where higher scores represent a higher level of ADHD traits. Scores of at least four were coded as high ADHD traits, as recommended by Kessler et al. (2005). Participants below this cut-off were coded as having low ADHD traits.
+
+Physiological emotional response was conceptualized as heart rate and was measured using a finger pulse oximeter. Heart rate was measured before, during and after a negative emotion induction task. Before and during task heart rates were measured for two minutes and the after heart rate was measured for 30 seconds.
+
+The task used was Cyberball (reference), which is a computerised ball toss game that simulates social exclusion. Previous research indicates that it reliably induces negative emotions (reference). It had good face validity within our study as many participants voiced their frustrations with the game.
+
 ```{r}
 
-# load heart rate google sheet
+# load heart rate data
 
-heartRate= read_sheet('https://docs.google.com/spreadsheets/d/1zoV4IGYR2Lr7VZV4mJwCslphvym3yD8anXt7cJ_Yhjw/edit?gid=0#gid=0')
+filePath1= here("Data", "heart rate data.xlsx")
+heartRate= read_excel(filePath1)
+# heart rate data: https://docs.google.com/spreadsheets/d/1zoV4IGYR2Lr7VZV4mJwCslphvym3yD8anXt7cJ_Yhjw/edit?gid=0#gid=0
 
-# load qualtrics data google sheet
+# load qualtrics data
 
-ASRSscores= read_sheet('https://docs.google.com/spreadsheets/d/18VtUgG987tZLIG8mLXtAR5k2FWN836wPT-T5iGaddPc/edit?gid=0#gid=0')                
+filePath2= here("Data", "qualtrics data.xlsx")
+ASRSscores= read_excel(filePath2)
+# qualtrics data: https://docs.google.com/spreadsheets/d/18VtUgG987tZLIG8mLXtAR5k2FWN836wPT-T5iGaddPc/edit?gid=0#gid=0
 
 ```
 
 ## Wrangle Data
 
+The heart rate data is a spreadsheet containing the average heart rate over each time point for each participant.
+
+The ASRS data is in a spreadsheet containing all of the data that Qualtrics recorded for each individual participant. Most of this data is irrelevant, such as the IP address of the computer that it was completed from, and some of it is from the study but will not be used for this visualisation, such as the subjective emotion scores. The ASRS scores have already been coded into points by Qualtrics, but the individual responses are not totalled for each participant.
+
 ```{r}
 
 ##### Heart Rate #####
 
-# removing empty column and notes column
+# remove empty column and notes column
 heartRate = heartRate %>%
   select(Participant, HeartRate1, HeartRate2, HeartRate3)
 
@@ -56,8 +86,6 @@ sapply(heartRate, class)
 
 # make heart rate 2 numeric
 heartRate$HeartRate2= as.numeric(heartRate$HeartRate2)
-
-# check that heart rate 2 is now numeric
 is.numeric(heartRate$HeartRate2)
 
 
@@ -81,7 +109,6 @@ ASRSscores[8, 1]= 1
 ASRSscores[4, 1]= 6 
 ASRSscores[5, 1]= 7
 ASRSscores[6, 1]= 8
-## could create for loop to +1 from 4,1 to 6,1
 
 # participant IDs in ascending order
 ASRSscores = arrange(ASRSscores, Q23)
@@ -159,6 +186,12 @@ summariseData= left_join(meanData, SDdata, by= c("ADHDtraits",
 
 ## Visualise Data
 
+The visualization is a grouped bar graph showing the average heart rate for low and high ADHD trait groups across three time points. The participants are grouped by level of ADHD traits and both groups have a bar chart for before, during and after negative emotion induction. On the y axis is the average heart rate. The y axis starts at 50 because, as it represents heart rate, values slightly below that are unlikely and values far below that are impossible. The error bars show the range of values that were one SD away from the mean. 
+
+This type of visualization was chosen because it is a clear way to show a difference between groups across a dependent variable. Furthermore, it is useful for displaying a within and a between participants independent variable in a single visualization.
+
+An animation was added to show the exact mean values to 2 decimal places that are displayed by each bar. This was done because the scale is relatively large so the exact values are not visually clear.
+
 ```{r}
 
 ##### Bar Chart #####
@@ -169,32 +202,35 @@ summariseData$TimePoint= factor(summariseData$TimePoint,
 summariseData$ADHDtraits= factor(summariseData$ADHDtraits,
                             levels= c("low", "high"))
 
+# create colour palette
+redPalette= c("#f00000", "#b30000", "#750000") 
+
 # create grouped bar chart
-ggplot(summariseData, aes(x= ADHDtraits, y= HRmean, fill= TimePoint)) +
-  geom_bar(stat= "identity",
-           position= "dodge",
-           
-           # add outline to bars
-           colour= "black") +
+HRchart= ggplot(summariseData, aes(x= ADHDtraits, y= HRmean, 
+                                    fill= TimePoint,
+                                   
+                                   # add hover text of y value
+                                   tooltip= sprintf("%.2f", HRmean))) +
+  
+  # customise bars
+  geom_bar_interactive(stat= "identity", position= "dodge", 
+                       colour= "black", width= 0.8) +
   
   # label axes
   xlab("Level of ADHD Traits") +
-  ylab("Mean Heart Rate") +
+  ylab("Mean BPM") +
   
   # change legend title
   labs(fill = "Time Point") +
   
-  # add title
+  # add main title
   ggtitle("Heart Rate Pre-, Peri- and Post-Negative Emotion Induction by Level of ADHD Traits") +
   
   # start y axis at 50
   coord_cartesian(ylim = c(50, NA)) +
   
-  # change bar colours
-  scale_fill_hue(c = 60) +
-  scale_fill_brewer(palette= "Reds") +
-  
-  # change background
+  # change bar and background colours
+  scale_fill_manual(values= redPalette) +
   theme(panel.background = element_blank(),
         
         # add axis lines
@@ -202,18 +238,37 @@ ggplot(summariseData, aes(x= ADHDtraits, y= HRmean, fill= TimePoint)) +
         
         # change font
         text = element_text(family = "sans"),
-        
-        # centre title
-        plot.title = element_text(hjust = 0.5)) +
+        plot.title = element_text(hjust = 0.5,
+                                  size= 12)) +
   
-  # add sd error bars
+  # add error bars showing 1 SD
    geom_errorbar(aes(x= ADHDtraits, ymin=HRmean-HRsd, ymax=HRmean+HRsd),
                  width=.4,
-                 position=position_dodge(.9))
-  
-# save to output folder
+                 position=position_dodge(.8))
 
+# create output folder
+output_folder= "Output"
+
+if (!dir.exists(output_folder)) {
+  dir.create(output_folder)}
+
+# save plot
+ggsave(filename = file.path(output_folder, "HRchart.png"), plot = HRchart, width = 8, height = 4)
+
+# convert to ggiraph for hover text
+HRchart= girafe(ggobj = HRchart, width_svg= 8, height_svg = 4)
+
+HRchart
+
+# save plot
+saveWidget(HRchart, file = file.path(output_folder, "HRchart.html"))
 
 ```
+## Interpretation of the Data
 
+This data appears to show that there is no difference in physiological emotional response between high and low ADHD trait groups. This is because there is no clear difference in the change in bar heights across the three time points. This may show that there is no difference in autonomic nervous reactivity based on level of ADHD traits. However, neither group appeared to show a physiological response to Cyberball as there is minimal difference in the bar heights across the three time points within both groups. Therefore, these results may also show that Cyberball does not effectively induce a physiological reaction. Furthermore, there is a slight change in the one SD range in the high ADHD traits group, which appears to show that lower heart rates were more common during the task than before or after. This may be due to chance, or may show that some people with high ADHD traits experience a greater decrease in heart rate in response to emotion than people with low ADHD traits.
+
+There are some key limitations with the data. Firstly, there was high variability in the data between participants and the sample size was only 57. Therefore, there may not be enough participants for there to be a noticeable difference in heart rate between group. Secondly, there may be a floor effect. Within both groups, there was not a significant change in heart rate between time points. There may be a difference in physiological emotion response based on level of ADHD traits but this visualization was unable to display it because the task did not induce this type of response. 
+
+A possible direction for future research could be comparing adults with low ADHD traits to adults that have a diagnosis of and currently meet the diagnostic criteria for ADHD. Another possible future direction could be to use a different physiological measure, such as skin conductance, as these may be more sensitive measures. 
 
