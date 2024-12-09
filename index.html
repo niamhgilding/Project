@@ -1301,29 +1301,35 @@ emotional responses compared to people with low ADHD traits?</h1>
 <div id="load-libraries" class="section level2">
 <h2>Load Libraries</h2>
 <p>The libraries required for this code are tidyverse, here, dplyr,
-ggplot2, ggiraph, htmlwidgets and readxl.</p>
+ggplot2, ggiraph, htmlwidgets, rstatix and readxl.</p>
 <p>The packages were built under R version 4.3.3.</p>
 </div>
 <div id="load-data" class="section level2">
 <h2>Load Data</h2>
 <p>The data used for this visualization is from my dissertation project
 that I completed last year. We collected data from 60 current University
-of Sheffield students in one individual session for each
-participant.</p>
+of Sheffield students in one individual session for each participant.
+The exclusion criterion was having a heart condition. The sample
+consisted exclusively of young adults.</p>
 <p>ADHD traits were measured using section A from the Adult ADHD
 Self-Report Scale v1.1 (Kessler et al., 2005). This consists of six
 Likert scale questions that are answered on a scale from “strongly
 agree” to “strongly disagree”. Participants are given either one point
 or zero points for each question based on their response. The responses
 are totalled out of six, where higher scores represent a higher level of
-ADHD traits. Scores of at least four were coded as high ADHD traits, as
-recommended by Kessler et al. (2005). Participants below this cut-off
-were coded as having low ADHD traits.</p>
+ADHD traits. The ASRS data is in a spreadsheet containing all of the
+data that Qualtrics recorded for each individual participant.</p>
 <p>Physiological emotional response was conceptualized as heart rate and
 was measured using a finger pulse oximeter. Heart rate was measured
 before, during and after a negative emotion induction task. Before and
 during task heart rates were measured for two minutes and the after
-heart rate was measured for 30 seconds.</p>
+heart rate was measured for 30 seconds. There was always a researcher
+monitoring the measurement remotely through the ViHealth app as it was
+being recorded to check for problems with the oximeter. ViHealth
+automatically computed the average the heart rate for each individual
+measurement. These were saved and copied into an excel spreadsheet with
+the participant ID and notes detailing the time measured and any
+potential methodological problems.</p>
 <p>The task used was Cyberball (reference), which is a computerised ball
 toss game that simulates social exclusion. Previous research indicates
 that it reliably induces negative emotions (reference). It had good face
@@ -1337,26 +1343,70 @@ heartRate= read_excel(filePath1)</code></pre>
 ## • `` -&gt; `...5`</code></pre>
 <pre class="r"><code># heart rate data: https://docs.google.com/spreadsheets/d/1zoV4IGYR2Lr7VZV4mJwCslphvym3yD8anXt7cJ_Yhjw/edit?gid=0#gid=0
 
-# load qualtrics data
+# load Qualtrics data
 
 filePath2= here(&quot;Data&quot;, &quot;qualtrics data.xlsx&quot;)
 ASRSscores= read_excel(filePath2)
-# qualtrics data: https://docs.google.com/spreadsheets/d/18VtUgG987tZLIG8mLXtAR5k2FWN836wPT-T5iGaddPc/edit?gid=0#gid=0</code></pre>
+# Qualtrics data: https://docs.google.com/spreadsheets/d/18VtUgG987tZLIG8mLXtAR5k2FWN836wPT-T5iGaddPc/edit?gid=0#gid=0</code></pre>
 </div>
 <div id="wrangle-data" class="section level2">
 <h2>Wrangle Data</h2>
-<p>The heart rate data is a spreadsheet containing the average heart
-rate over each time point for each participant.</p>
-<p>The ASRS data is in a spreadsheet containing all of the data that
-Qualtrics recorded for each individual participant. Most of this data is
-irrelevant, such as the IP address of the computer that it was completed
-from, and some of it is from the study but will not be used for this
-visualisation, such as the subjective emotion scores. The ASRS scores
-have already been coded into points by Qualtrics, but the individual
-responses are not totalled for each participant.</p>
-<pre class="r"><code>##### Heart Rate #####
+<p>Since the average heart rate over each time point for each
+participant was pre-calculated, this data did not require much
+pre-processing. The main steps were removing the notes and, once
+combined with the ASRS data, calculating the mean and standard deviation
+(SD) for each time point.</p>
+<p>Most of the Qualtrics data is completely irrelevant, such as the IP
+address of the computer that it was completed on. Some of it was
+measured as part of the study but will not be used for this
+visualization, such as the subjective emotion scores. The ASRS scores
+were already been coded into points by Qualtrics, but it did not total
+the individual responses for each participant, nor did it code them into
+high and low trait groups. Firstly, irrelevant data and test responses
+were removed to only keep the participant ID and scores for each of the
+ASRS items for true participants.</p>
+<p>A few times the participants did not click submit which was not
+noticed until a later date. The response could still be submitted from
+whichever researcher’s laptop it had been completed on. However, this
+did mean that the heart rate and Qualtrics data does not align in a
+couple of places. This was fixed by changing the affected participant
+IDs prior to combining the data.</p>
+<p>Scores of at least four were coded as high ADHD traits, as
+recommended by Kessler et al. (2005). Participants below this cut-off
+were coded as having low ADHD traits. Across the 60 participants, 33
+were in the high ADHD traits groups and 27 were in the low ADHD traits
+group.</p>
+<p>The sanity checks showed that all of the totalled ASRS values fell
+within the possible range (0-6), which indicates no computational
+issues. The sanity checks of the maximum and minimum heart rate were
+more ambiguous. Heart rate is highly variable between individuals, but
+the accepted normal range is between 60 and 100 beats per minute (BPM).
+A resting heart rate of below 40 or above 120 is considered to be a
+medical problem. The maximum BPM at baseline was 120, which is much
+higher than what is considered to be normal, especially as younger
+adults tend towards the lower end of the normal range. Therefore, this
+value is more likely to be due to nervousness than a true baseline
+measure and thus this participant was excluded. The next highest
+baseline value was 104, which is close to the normal range. This value
+and similar values over 100 were included in the final sample in order
+to preserve individual variation. The maximum BPM values peri- and
+post-task were also much higher than the normal range at 135 and 132
+respectively. These were not excluded because these were not baseline
+measurements and these values are plausible within the context of
+negative emotion induction. There was a minimum BPM value of 40 during
+the task. Whilst rare, this is plausible in physically active
+individuals, especially if they are young adults. Since this is not
+inherently medically concerning and no problems with the oximeter were
+noted during this trial, this participant was not removed.</p>
+<p>Three additional participants were removed due to problems with data
+collection. With four participants removed, the final sample size was 56
+participants. There were 31 participants in the high ADHD traits group
+and 25 in the low ADHD traits group. This means there was a roughly
+equal split between groups. Of the four participants that were removed,
+two were removed from each group.</p>
+<pre class="r"><code>##### HEART RATE #####
 
-# remove empty column and notes column
+# remove irrelevant columns
 heartRate = heartRate %&gt;%
   select(Participant, HeartRate1, HeartRate2, HeartRate3)
 
@@ -1371,7 +1421,14 @@ sapply(heartRate, class)</code></pre>
 heartRate$HeartRate2= as.numeric(heartRate$HeartRate2)
 is.numeric(heartRate$HeartRate2)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="r"><code>##### ASRS scores #####
+<pre class="r"><code># check participant n and heart rate range
+nrow(heartRate)</code></pre>
+<pre><code>## [1] 60</code></pre>
+<pre class="r"><code>apply(heartRate, 2, range)</code></pre>
+<pre><code>##      Participant HeartRate1 HeartRate2 HeartRate3
+## [1,]           1         59         40         55
+## [2,]          60        120        135        132</code></pre>
+<pre class="r"><code>##### ASRS SCORES #####
 
 # only keep participant ID and ASRS score columns
 ASRSscores= ASRSscores %&gt;%
@@ -1398,9 +1455,13 @@ ASRSscores = arrange(ASRSscores, Q23)
 
 # total ASRS scores
 ASRSscores= ASRSscores %&gt;%
-  mutate(ASRStotal= Q1 + Q2 + Q3 + Q4 + Q5 + Q6) %&gt;%
+  mutate(ASRStotal= Q1 + Q2 + Q3 + Q4 + Q5 + Q6)
   
-  # split participants into high and low ADHD traits
+# check minimum and maximum ASRS total
+range(ASRSscores$ASRStotal) </code></pre>
+<pre><code>## [1] 1 6</code></pre>
+<pre class="r"><code># split participants into high and low ADHD traits
+ASRSscores= ASRSscores %&gt;%
   mutate(ADHDtraits = case_when(
     ASRStotal &lt; 4 ~ &quot;low&quot;,
     TRUE ~ &quot;high&quot;
@@ -1412,16 +1473,32 @@ ASRSscores= ASRSscores %&gt;%
   # rename column
   rename(Participant= Q23)
 
-
-##### Combined Data #####
+# check total n and group split
+nrow(ASRSscores)</code></pre>
+<pre><code>## [1] 60</code></pre>
+<pre class="r"><code>table(ASRSscores$ADHDtraits)</code></pre>
+<pre><code>## 
+## high  low 
+##   33   27</code></pre>
+<pre class="r"><code>##### COMBINED DATA #####
 
 # combine data frames
 combinedData= left_join(heartRate, ASRSscores, by= c(&quot;Participant&quot;)) %&gt;%
   
-  # remove participant 1, 9 and 25 for data collection problems
-  slice(2:8, 10:24, 26:60)
+  # remove participant 1, 7, 9 and 25
+  slice(2:6, 8, 10:24, 26:60)
 
-# calculate pre-, peri- and post-task means and SDs for both groups
+# check maximum baseline heart rate
+max(combinedData$HeartRate1)</code></pre>
+<pre><code>## [1] 104</code></pre>
+<pre class="r"><code># check total n and group split
+nrow(combinedData)</code></pre>
+<pre><code>## [1] 56</code></pre>
+<pre class="r"><code>table(combinedData$ADHDtraits)</code></pre>
+<pre><code>## 
+## high  low 
+##   31   25</code></pre>
+<pre class="r"><code># calculate pre-, peri- and post-task means and SDs for both groups
 groupedData= combinedData %&gt;%
   group_by(ADHDtraits) %&gt;%
   summarise(HRbefore= mean(HeartRate1),
@@ -1431,7 +1508,6 @@ groupedData= combinedData %&gt;%
             SDduring= sd(HeartRate2),
             SDafter= sd(HeartRate3),
             .groups = &#39;drop&#39;)
-##might be easier to start them as 2 separate data frames, then pivot, then combine?
 
 # pivot mean data
 meanData= groupedData %&gt;% 
@@ -1471,10 +1547,11 @@ summariseData= left_join(meanData, SDdata, by= c(&quot;ADHDtraits&quot;,
 rate for low and high ADHD trait groups across three time points. The
 participants are grouped by level of ADHD traits and both groups have a
 bar chart for before, during and after negative emotion induction. On
-the y axis is the average heart rate. The y axis starts at 50 because,
-as it represents heart rate, values slightly below that are unlikely and
-values far below that are impossible. The error bars show the range of
-values that were one SD away from the mean.</p>
+the y axis is the average heart rate. The y axis starts at 40 because
+this was the lowest heart rate recorded. Furthermore, values below this
+are representative of an unhealthy heart rate and thus are irrelevant to
+this study. The error bars show the range of values that were one SD
+away from the mean.</p>
 <p>This type of visualization was chosen because it is a clear way to
 show a difference between groups across a dependent variable.
 Furthermore, it is useful for displaying a within and a between
@@ -1482,7 +1559,7 @@ participants independent variable in a single visualization.</p>
 <p>An animation was added to show the exact mean values to 2 decimal
 places that are displayed by each bar. This was done because the scale
 is relatively large so the exact values are not visually clear.</p>
-<pre class="r"><code>##### Bar Chart #####
+<pre class="r"><code>##### SET UP #####
 
 # order IVs
 summariseData$TimePoint= factor(summariseData$TimePoint, 
@@ -1493,7 +1570,9 @@ summariseData$ADHDtraits= factor(summariseData$ADHDtraits,
 # create colour palette
 redPalette= c(&quot;#f00000&quot;, &quot;#b30000&quot;, &quot;#750000&quot;) 
 
-# create grouped bar chart
+
+##### CREATE BAR CHART #####
+
 HRchart= ggplot(summariseData, aes(x= ADHDtraits, y= HRmean, 
                                     fill= TimePoint,
                                    
@@ -1504,20 +1583,18 @@ HRchart= ggplot(summariseData, aes(x= ADHDtraits, y= HRmean,
   geom_bar_interactive(stat= &quot;identity&quot;, position= &quot;dodge&quot;, 
                        colour= &quot;black&quot;, width= 0.8) +
   
-  # label axes
+  # add axis, legend and main titles
   xlab(&quot;Level of ADHD Traits&quot;) +
   ylab(&quot;Mean BPM&quot;) +
   
-  # change legend title
   labs(fill = &quot;Time Point&quot;) +
   
-  # add main title
-  ggtitle(&quot;Heart Rate Pre-, Peri- and Post-Negative Emotion Induction by Level of ADHD Traits&quot;) +
+  ggtitle(&quot;Heart Rate Pre-, Peri- and Post-Negative Emotion Induction by   Level of ADHD Traits&quot;) +
   
-  # start y axis at 50
-  coord_cartesian(ylim = c(50, NA)) +
+  # start y axis at 40
+  coord_cartesian(ylim = c(40, NA)) +
   
-  # change bar and background colours
+  # change colours
   scale_fill_manual(values= redPalette) +
   theme(panel.background = element_blank(),
         
@@ -1529,10 +1606,13 @@ HRchart= ggplot(summariseData, aes(x= ADHDtraits, y= HRmean,
         plot.title = element_text(hjust = 0.5,
                                   size= 12)) +
   
-  # add error bars showing 1 SD
+  # add 1 SD error bars
    geom_errorbar(aes(x= ADHDtraits, ymin=HRmean-HRsd, ymax=HRmean+HRsd),
                  width=.4,
                  position=position_dodge(.8))
+
+
+##### SAVE #####
 
 # create output folder
 output_folder= &quot;Output&quot;
@@ -1543,12 +1623,15 @@ if (!dir.exists(output_folder)) {
 # save plot
 ggsave(filename = file.path(output_folder, &quot;HRchart.png&quot;), plot = HRchart, width = 8, height = 4)
 
+
+##### CONVERT #####
+
 # convert to ggiraph for hover text
 HRchart= girafe(ggobj = HRchart, width_svg= 8, height_svg = 4)
 
 HRchart</code></pre>
-<div class="girafe html-widget html-fill-item" id="htmlwidget-6391db1f2e2a1ad5bbb0" style="width:672px;height:480px;"></div>
-<script type="application/json" data-for="htmlwidget-6391db1f2e2a1ad5bbb0">{"x":{"html":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' class='ggiraph-svg' role='graphics-document' id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af' viewBox='0 0 576 288'>\n <defs id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_defs'>\n  <clipPath id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_c1'>\n   <rect x='0' y='0' width='576' height='288'/>\n  <\/clipPath>\n  <clipPath id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_c2'>\n   <rect x='38.03' y='22.08' width='458.4' height='234.43'/>\n  <\/clipPath>\n <\/defs>\n <g id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_rootg' class='ggiraph-svg-rootg'>\n  <g clip-path='url(#svg_acba9754_28bf_40cb_87b6_b2f4a89300af_c1)'>\n   <rect x='0' y='0' width='576' height='288' fill='#FFFFFF' fill-opacity='1' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.75' stroke-linejoin='round' stroke-linecap='round' class='ggiraph-svg-bg'/>\n   <rect x='0' y='0' width='576' height='288' fill='#FFFFFF' fill-opacity='1' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='round'/>\n  <\/g>\n  <g clip-path='url(#svg_acba9754_28bf_40cb_87b6_b2f4a89300af_c2)'>\n   <polyline points='38.03,223.53 496.43,223.53' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.53' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,178.90 496.43,178.90' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.53' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,134.28 496.43,134.28' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.53' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,89.65 496.43,89.65' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.53' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,45.02 496.43,45.02' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.53' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,245.85 496.43,245.85' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,201.22 496.43,201.22' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,156.59 496.43,156.59' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,111.96 496.43,111.96' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,67.33 496.43,67.33' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,22.70 496.43,22.70' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='163.05,256.50 163.05,22.08' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='371.41,256.50 371.41,22.08' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <rect id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_e1' x='288.07' y='100.16' width='55.56' height='368.84' fill='#F00000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='82.65'/>\n   <rect id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_e2' x='343.63' y='105.92' width='55.56' height='363.08' fill='#B30000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='81.35'/>\n   <rect id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_e3' x='399.2' y='95.55' width='55.56' height='373.44' fill='#750000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='83.68'/>\n   <rect id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_e4' x='79.71' y='102.18' width='55.56' height='366.81' fill='#F00000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='82.19'/>\n   <rect id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_e5' x='135.27' y='107.33' width='55.56' height='361.66' fill='#B30000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='81.04'/>\n   <rect id='svg_acba9754_28bf_40cb_87b6_b2f4a89300af_e6' x='190.83' y='106.3' width='55.56' height='362.69' fill='#750000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='81.27'/>\n   <polyline points='301.96,43.80 329.74,43.80' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='315.85,43.80 315.85,156.51' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='301.96,156.51 329.74,156.51' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='357.52,32.73 385.30,32.73' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='371.41,32.73 371.41,179.10' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='357.52,179.10 385.30,179.10' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='413.09,35.54 440.87,35.54' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='426.98,35.54 426.98,155.56' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='413.09,155.56 440.87,155.56' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='93.60,36.81 121.38,36.81' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='107.49,36.81 107.49,167.55' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='93.60,167.55 121.38,167.55' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='149.16,40.19 176.94,40.19' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='163.05,40.19 163.05,174.46' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='149.16,174.46 176.94,174.46' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='204.72,43.01 232.51,43.01' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='218.61,43.01 218.61,169.58' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='204.72,169.58 232.51,169.58' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n  <\/g>\n  <g clip-path='url(#svg_acba9754_28bf_40cb_87b6_b2f4a89300af_c1)'>\n   <polyline points='38.03,256.50 38.03,22.08' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <text x='23.31' y='249' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>50<\/text>\n   <text x='23.31' y='204.37' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>60<\/text>\n   <text x='23.31' y='159.74' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>70<\/text>\n   <text x='23.31' y='115.11' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>80<\/text>\n   <text x='23.31' y='70.48' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>90<\/text>\n   <text x='18.41' y='25.85' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>100<\/text>\n   <polyline points='35.29,245.85 38.03,245.85' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='35.29,201.22 38.03,201.22' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='35.29,156.59 38.03,156.59' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='35.29,111.96 38.03,111.96' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='35.29,67.33 38.03,67.33' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='35.29,22.70 38.03,22.70' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,256.50 496.43,256.50' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='163.05,259.24 163.05,256.50' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='371.41,259.24 371.41,256.50' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <text x='156.45' y='267.74' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>low<\/text>\n   <text x='363.09' y='267.74' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>high<\/text>\n   <text x='216.18' y='280.2' font-size='8.25pt' font-family='Arial'>Level of ADHD Traits<\/text>\n   <text transform='translate(13.36,166.50) rotate(-90.00)' font-size='8.25pt' font-family='Arial'>Mean BPM<\/text>\n   <rect x='507.39' y='100.05' width='63.13' height='78.47' fill='#FFFFFF' fill-opacity='1' stroke='none'/>\n   <text x='512.87' y='114.57' font-size='8.25pt' font-family='Arial'>Time Point<\/text>\n   <rect x='513.58' y='121.92' width='15.86' height='15.86' fill='#F00000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt'/>\n   <rect x='513.58' y='139.2' width='15.86' height='15.86' fill='#B30000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt'/>\n   <rect x='513.58' y='156.48' width='15.86' height='15.86' fill='#750000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt'/>\n   <text x='535.63' y='133' font-size='6.6pt' font-family='Arial'>before<\/text>\n   <text x='535.63' y='150.28' font-size='6.6pt' font-family='Arial'>during<\/text>\n   <text x='535.63' y='167.56' font-size='6.6pt' font-family='Arial'>after<\/text>\n   <text x='43.1' y='14.08' font-size='9pt' font-family='Arial'>Heart Rate Pre-, Peri- and Post-Negative Emotion Induction by Level of ADHD Traits<\/text>\n  <\/g>\n <\/g>\n<\/svg>","js":null,"uid":"svg_acba9754_28bf_40cb_87b6_b2f4a89300af","ratio":2,"settings":{"tooltip":{"css":".tooltip_SVGID_ { padding:5px;background:black;color:white;border-radius:2px;text-align:left; ; position:absolute;pointer-events:none;z-index:999;}","placement":"doc","opacity":0.9,"offx":10,"offy":10,"use_cursor_pos":true,"use_fill":false,"use_stroke":false,"delay_over":200,"delay_out":500},"hover":{"css":".hover_data_SVGID_ { fill:orange;stroke:black;cursor:pointer; }\ntext.hover_data_SVGID_ { stroke:none;fill:orange; }\ncircle.hover_data_SVGID_ { fill:orange;stroke:black; }\nline.hover_data_SVGID_, polyline.hover_data_SVGID_ { fill:none;stroke:orange; }\nrect.hover_data_SVGID_, polygon.hover_data_SVGID_, path.hover_data_SVGID_ { fill:orange;stroke:none; }\nimage.hover_data_SVGID_ { stroke:orange; }","reactive":true,"nearest_distance":null},"hover_inv":{"css":""},"hover_key":{"css":".hover_key_SVGID_ { fill:orange;stroke:black;cursor:pointer; }\ntext.hover_key_SVGID_ { stroke:none;fill:orange; }\ncircle.hover_key_SVGID_ { fill:orange;stroke:black; }\nline.hover_key_SVGID_, polyline.hover_key_SVGID_ { fill:none;stroke:orange; }\nrect.hover_key_SVGID_, polygon.hover_key_SVGID_, path.hover_key_SVGID_ { fill:orange;stroke:none; }\nimage.hover_key_SVGID_ { stroke:orange; }","reactive":true},"hover_theme":{"css":".hover_theme_SVGID_ { fill:orange;stroke:black;cursor:pointer; }\ntext.hover_theme_SVGID_ { stroke:none;fill:orange; }\ncircle.hover_theme_SVGID_ { fill:orange;stroke:black; }\nline.hover_theme_SVGID_, polyline.hover_theme_SVGID_ { fill:none;stroke:orange; }\nrect.hover_theme_SVGID_, polygon.hover_theme_SVGID_, path.hover_theme_SVGID_ { fill:orange;stroke:none; }\nimage.hover_theme_SVGID_ { stroke:orange; }","reactive":true},"select":{"css":".select_data_SVGID_ { fill:red;stroke:black;cursor:pointer; }\ntext.select_data_SVGID_ { stroke:none;fill:red; }\ncircle.select_data_SVGID_ { fill:red;stroke:black; }\nline.select_data_SVGID_, polyline.select_data_SVGID_ { fill:none;stroke:red; }\nrect.select_data_SVGID_, polygon.select_data_SVGID_, path.select_data_SVGID_ { fill:red;stroke:none; }\nimage.select_data_SVGID_ { stroke:red; }","type":"multiple","only_shiny":true,"selected":[]},"select_inv":{"css":""},"select_key":{"css":".select_key_SVGID_ { fill:red;stroke:black;cursor:pointer; }\ntext.select_key_SVGID_ { stroke:none;fill:red; }\ncircle.select_key_SVGID_ { fill:red;stroke:black; }\nline.select_key_SVGID_, polyline.select_key_SVGID_ { fill:none;stroke:red; }\nrect.select_key_SVGID_, polygon.select_key_SVGID_, path.select_key_SVGID_ { fill:red;stroke:none; }\nimage.select_key_SVGID_ { stroke:red; }","type":"single","only_shiny":true,"selected":[]},"select_theme":{"css":".select_theme_SVGID_ { fill:red;stroke:black;cursor:pointer; }\ntext.select_theme_SVGID_ { stroke:none;fill:red; }\ncircle.select_theme_SVGID_ { fill:red;stroke:black; }\nline.select_theme_SVGID_, polyline.select_theme_SVGID_ { fill:none;stroke:red; }\nrect.select_theme_SVGID_, polygon.select_theme_SVGID_, path.select_theme_SVGID_ { fill:red;stroke:none; }\nimage.select_theme_SVGID_ { stroke:red; }","type":"single","only_shiny":true,"selected":[]},"zoom":{"min":1,"max":1,"duration":300},"toolbar":{"position":"topright","pngname":"diagram","tooltips":null,"fixed":false,"hidden":[],"delay_over":200,"delay_out":500},"sizing":{"rescale":true,"width":1}}},"evals":[],"jsHooks":[]}</script>
+<div class="girafe html-widget html-fill-item" id="htmlwidget-1f4a0a86036cd2c2f7ce" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-1f4a0a86036cd2c2f7ce">{"x":{"html":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' class='ggiraph-svg' role='graphics-document' id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c' viewBox='0 0 576 288'>\n <defs id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_defs'>\n  <clipPath id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_c1'>\n   <rect x='0' y='0' width='576' height='288'/>\n  <\/clipPath>\n  <clipPath id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_c2'>\n   <rect x='38.03' y='22.08' width='458.4' height='234.43'/>\n  <\/clipPath>\n <\/defs>\n <g id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_rootg' class='ggiraph-svg-rootg'>\n  <g clip-path='url(#svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_c1)'>\n   <rect x='0' y='0' width='576' height='288' fill='#FFFFFF' fill-opacity='1' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.75' stroke-linejoin='round' stroke-linecap='round' class='ggiraph-svg-bg'/>\n   <rect x='0' y='0' width='576' height='288' fill='#FFFFFF' fill-opacity='1' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='round'/>\n  <\/g>\n  <g clip-path='url(#svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_c2)'>\n   <polyline points='38.03,208.95 496.43,208.95' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.53' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,135.14 496.43,135.14' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.53' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,61.34 496.43,61.34' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='0.53' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,245.85 496.43,245.85' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,172.05 496.43,172.05' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,98.24 496.43,98.24' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,24.44 496.43,24.44' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='163.05,256.50 163.05,22.08' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='371.41,256.50 371.41,22.08' fill='none' stroke='#FFFFFF' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <rect id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_e1' x='288.07' y='88.48' width='55.56' height='304.97' fill='#F00000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='82.65'/>\n   <rect id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_e2' x='343.63' y='93.24' width='55.56' height='300.21' fill='#B30000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='81.35'/>\n   <rect id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_e3' x='399.2' y='84.67' width='55.56' height='308.78' fill='#750000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='83.68'/>\n   <rect id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_e4' x='79.71' y='95.73' width='55.56' height='297.72' fill='#F00000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='80.68'/>\n   <rect id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_e5' x='135.27' y='101.49' width='55.56' height='291.96' fill='#B30000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='79.12'/>\n   <rect id='svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_e6' x='190.83' y='99.57' width='55.56' height='293.88' fill='#750000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt' title='79.64'/>\n   <polyline points='301.96,41.89 329.74,41.89' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='315.85,41.89 315.85,135.08' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='301.96,135.08 329.74,135.08' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='357.52,32.73 385.30,32.73' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='371.41,32.73 371.41,153.75' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='357.52,153.75 385.30,153.75' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='413.09,35.05 440.87,35.05' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='426.98,35.05 426.98,134.29' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='413.09,134.29 440.87,134.29' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='93.60,48.83 121.38,48.83' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='107.49,48.83 107.49,142.64' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='93.60,142.64 121.38,142.64' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='149.16,58.45 176.94,58.45' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='163.05,58.45 163.05,144.53' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='149.16,144.53 176.94,144.53' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='204.72,56.29 232.51,56.29' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='218.61,56.29 218.61,142.85' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='204.72,142.85 232.51,142.85' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n  <\/g>\n  <g clip-path='url(#svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c_c1)'>\n   <polyline points='38.03,256.50 38.03,22.08' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <text x='23.31' y='249' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>40<\/text>\n   <text x='23.31' y='175.2' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>60<\/text>\n   <text x='23.31' y='101.39' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>80<\/text>\n   <text x='18.41' y='27.59' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>100<\/text>\n   <polyline points='35.29,245.85 38.03,245.85' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='35.29,172.05 38.03,172.05' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='35.29,98.24 38.03,98.24' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='35.29,24.44 38.03,24.44' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='38.03,256.50 496.43,256.50' fill='none' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='163.05,259.24 163.05,256.50' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <polyline points='371.41,259.24 371.41,256.50' fill='none' stroke='#333333' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='round' stroke-linecap='butt'/>\n   <text x='156.45' y='267.74' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>low<\/text>\n   <text x='363.09' y='267.74' font-size='6.6pt' font-family='Arial' fill='#4D4D4D' fill-opacity='1'>high<\/text>\n   <text x='216.18' y='280.2' font-size='8.25pt' font-family='Arial'>Level of ADHD Traits<\/text>\n   <text transform='translate(13.36,166.50) rotate(-90.00)' font-size='8.25pt' font-family='Arial'>Mean BPM<\/text>\n   <rect x='507.39' y='100.05' width='63.13' height='78.47' fill='#FFFFFF' fill-opacity='1' stroke='none'/>\n   <text x='512.87' y='114.57' font-size='8.25pt' font-family='Arial'>Time Point<\/text>\n   <rect x='513.58' y='121.92' width='15.86' height='15.86' fill='#F00000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt'/>\n   <rect x='513.58' y='139.2' width='15.86' height='15.86' fill='#B30000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt'/>\n   <rect x='513.58' y='156.48' width='15.86' height='15.86' fill='#750000' fill-opacity='1' stroke='#000000' stroke-opacity='1' stroke-width='1.07' stroke-linejoin='miter' stroke-linecap='butt'/>\n   <text x='535.63' y='133' font-size='6.6pt' font-family='Arial'>before<\/text>\n   <text x='535.63' y='150.28' font-size='6.6pt' font-family='Arial'>during<\/text>\n   <text x='535.63' y='167.56' font-size='6.6pt' font-family='Arial'>after<\/text>\n   <text x='39.77' y='14.08' font-size='9pt' font-family='Arial'>Heart Rate Pre-, Peri- and Post-Negative Emotion Induction by   Level of ADHD Traits<\/text>\n  <\/g>\n <\/g>\n<\/svg>","js":null,"uid":"svg_1c28d7dd_bf01_4e83_b075_1bc1a44a1a7c","ratio":2,"settings":{"tooltip":{"css":".tooltip_SVGID_ { padding:5px;background:black;color:white;border-radius:2px;text-align:left; ; position:absolute;pointer-events:none;z-index:999;}","placement":"doc","opacity":0.9,"offx":10,"offy":10,"use_cursor_pos":true,"use_fill":false,"use_stroke":false,"delay_over":200,"delay_out":500},"hover":{"css":".hover_data_SVGID_ { fill:orange;stroke:black;cursor:pointer; }\ntext.hover_data_SVGID_ { stroke:none;fill:orange; }\ncircle.hover_data_SVGID_ { fill:orange;stroke:black; }\nline.hover_data_SVGID_, polyline.hover_data_SVGID_ { fill:none;stroke:orange; }\nrect.hover_data_SVGID_, polygon.hover_data_SVGID_, path.hover_data_SVGID_ { fill:orange;stroke:none; }\nimage.hover_data_SVGID_ { stroke:orange; }","reactive":true,"nearest_distance":null},"hover_inv":{"css":""},"hover_key":{"css":".hover_key_SVGID_ { fill:orange;stroke:black;cursor:pointer; }\ntext.hover_key_SVGID_ { stroke:none;fill:orange; }\ncircle.hover_key_SVGID_ { fill:orange;stroke:black; }\nline.hover_key_SVGID_, polyline.hover_key_SVGID_ { fill:none;stroke:orange; }\nrect.hover_key_SVGID_, polygon.hover_key_SVGID_, path.hover_key_SVGID_ { fill:orange;stroke:none; }\nimage.hover_key_SVGID_ { stroke:orange; }","reactive":true},"hover_theme":{"css":".hover_theme_SVGID_ { fill:orange;stroke:black;cursor:pointer; }\ntext.hover_theme_SVGID_ { stroke:none;fill:orange; }\ncircle.hover_theme_SVGID_ { fill:orange;stroke:black; }\nline.hover_theme_SVGID_, polyline.hover_theme_SVGID_ { fill:none;stroke:orange; }\nrect.hover_theme_SVGID_, polygon.hover_theme_SVGID_, path.hover_theme_SVGID_ { fill:orange;stroke:none; }\nimage.hover_theme_SVGID_ { stroke:orange; }","reactive":true},"select":{"css":".select_data_SVGID_ { fill:red;stroke:black;cursor:pointer; }\ntext.select_data_SVGID_ { stroke:none;fill:red; }\ncircle.select_data_SVGID_ { fill:red;stroke:black; }\nline.select_data_SVGID_, polyline.select_data_SVGID_ { fill:none;stroke:red; }\nrect.select_data_SVGID_, polygon.select_data_SVGID_, path.select_data_SVGID_ { fill:red;stroke:none; }\nimage.select_data_SVGID_ { stroke:red; }","type":"multiple","only_shiny":true,"selected":[]},"select_inv":{"css":""},"select_key":{"css":".select_key_SVGID_ { fill:red;stroke:black;cursor:pointer; }\ntext.select_key_SVGID_ { stroke:none;fill:red; }\ncircle.select_key_SVGID_ { fill:red;stroke:black; }\nline.select_key_SVGID_, polyline.select_key_SVGID_ { fill:none;stroke:red; }\nrect.select_key_SVGID_, polygon.select_key_SVGID_, path.select_key_SVGID_ { fill:red;stroke:none; }\nimage.select_key_SVGID_ { stroke:red; }","type":"single","only_shiny":true,"selected":[]},"select_theme":{"css":".select_theme_SVGID_ { fill:red;stroke:black;cursor:pointer; }\ntext.select_theme_SVGID_ { stroke:none;fill:red; }\ncircle.select_theme_SVGID_ { fill:red;stroke:black; }\nline.select_theme_SVGID_, polyline.select_theme_SVGID_ { fill:none;stroke:red; }\nrect.select_theme_SVGID_, polygon.select_theme_SVGID_, path.select_theme_SVGID_ { fill:red;stroke:none; }\nimage.select_theme_SVGID_ { stroke:red; }","type":"single","only_shiny":true,"selected":[]},"zoom":{"min":1,"max":1,"duration":300},"toolbar":{"position":"topright","pngname":"diagram","tooltips":null,"fixed":false,"hidden":[],"delay_over":200,"delay_out":500},"sizing":{"rescale":true,"width":1}}},"evals":[],"jsHooks":[]}</script>
 <pre class="r"><code># save plot
 saveWidget(HRchart, file = file.path(output_folder, &quot;HRchart.html&quot;))</code></pre>
 </div>
@@ -1563,12 +1646,60 @@ traits. However, neither group appeared to show a physiological response
 to Cyberball as there is minimal difference in the bar heights across
 the three time points within both groups. Therefore, these results may
 also show that Cyberball does not effectively induce a physiological
-reaction. Furthermore, there is a slight change in the one SD range in
-the high ADHD traits group, which appears to show that lower heart rates
-were more common during the task than before or after. This may be due
-to chance, or may show that some people with high ADHD traits experience
-a greater decrease in heart rate in response to emotion than people with
-low ADHD traits.</p>
+reaction.</p>
+<p>The only notable differences between the groups are the error bars
+peri- and post-task. There is a greater variation in peri-task BPM in
+the high ADHD traits group than the low ADHD traits group.</p>
+<p>Furthermore, there is a similar degree of variation between the
+groups post-task, but the high ADHD traits group tend towards a faster
+heart rate. These difference can likely be explained by heart rate
+values that are significantly different from the other values within the
+high ADHD traits group. As shown below, there are no pre-task outliers,
+two peri-task outliers and one post-task outlier. All of these outliers
+were found in the high ADHD traits group.</p>
+<pre class="r"><code>###### INTERPRETATION #####
+
+# outliers within groups
+outliersBefore= combinedData %&gt;%
+  group_by(ADHDtraits) %&gt;%
+  identify_outliers(HeartRate1) %&gt;%
+  select(-Participant, -HeartRate1, -HeartRate2)
+print(outliersBefore)</code></pre>
+<pre><code>## [1] ADHDtraits HeartRate3 is.outlier is.extreme
+## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre class="r"><code>outliersDuring= combinedData %&gt;%
+  group_by(ADHDtraits) %&gt;%
+  identify_outliers(HeartRate2) %&gt;%
+  select(-Participant, -HeartRate1, -HeartRate2)
+print(outliersDuring)</code></pre>
+<pre><code>## # A tibble: 2 × 4
+##   ADHDtraits HeartRate3 is.outlier is.extreme
+##   &lt;chr&gt;           &lt;dbl&gt; &lt;lgl&gt;      &lt;lgl&gt;     
+## 1 high              132 TRUE       FALSE     
+## 2 high               65 TRUE       FALSE</code></pre>
+<pre class="r"><code>outliersAfter= combinedData %&gt;%
+  group_by(ADHDtraits) %&gt;%
+  identify_outliers(HeartRate3) %&gt;%
+  select(-Participant, -HeartRate1, -HeartRate2)
+print(outliersAfter)</code></pre>
+<pre><code>## # A tibble: 1 × 4
+##   ADHDtraits HeartRate3 is.outlier is.extreme
+##   &lt;chr&gt;           &lt;dbl&gt; &lt;lgl&gt;      &lt;lgl&gt;     
+## 1 high              132 TRUE       FALSE</code></pre>
+<p>Outliers can increase the spread of the data, which then increases
+the SD. The fact that there is a high and low peri-task outlier in the
+high ADHD traits group could explain why there is a larger SD but a
+similar mean compared to the low ADHD traits group. Neither are extreme
+outliers, so they likely each cancelled out the other values impact on
+the mean.</p>
+<p>The high outlier in the post-task SD may explain why the variation
+tends towards a higher heart rate in the high ADHD traits group than the
+low ADHD traits group. This may have also lead to a higher mean value,
+although this would not be drastic as it is not an extreme outlier.</p>
+<p>The fact that there were no outliers in the low ADHD traits group may
+be due to chance or may indicate that extreme values are more common in
+those with high ADHD traits. However, there would need to be a much
+higher sample size to observe this in order to rule out chance.</p>
 <p>There are some key limitations with the data. Firstly, there was high
 variability in the data between participants and the sample size was
 only 57. Therefore, there may not be enough participants for there to be
@@ -1577,7 +1708,14 @@ be a floor effect. Within both groups, there was not a significant
 change in heart rate between time points. There may be a difference in
 physiological emotion response based on level of ADHD traits but this
 visualization was unable to display it because the task did not induce
-this type of response.</p>
+this type of response. Another possible explanation is that participants
+were nervous about doing the study, as displayed by the higher than
+normal maximum heart rates across all three time points, so a
+physiological response above and beyond this could not be induced. This
+does not appear to be the case for all of the participants, but may
+apply to enough of them to skew the data. There are other factors that
+may have changed the heart rate of participants, such as nicotine use,
+which were not accounted for in the design of this study.</p>
 <p>A possible direction for future research could be comparing adults
 with low ADHD traits to adults that have a diagnosis of and currently
 meet the diagnostic criteria for ADHD. Another possible future direction
