@@ -7,82 +7,53 @@ date: "2024-11-11"
 
 ## Load Libraries
 
-The libraries required for this code are tidyverse, here, dplyr, ggplot2, ggiraph, htmlwidgets, rstatix and readxl. 
+The libraries required for this code are tidyverse, here, dplyr, ggplot2, ggiraph, htmlwidgets, rstatix and readxl. The packages were built under R version 4.3.3.
 
-The packages were built under R version 4.3.3.
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r, message= FALSE, warning= FALSE}
 
 # load libraries
 library(tidyverse)
 library(here)
 library(dplyr)
 library(ggplot2)
-
-# install ggiraph if not installed already
-if(!"ggiraph" %in% installed.packages()[ ,"Package"]) {
-  install.packages("ggiraph")
-} 
 library(ggiraph)
-
-# install htmlwidgets if not installed already
-if(!"htmlwidgets" %in% installed.packages()[ ,"Package"]) {
-  install.packages("htmlwidgets")
-} 
 library(htmlwidgets)
-
-# install readxl if not installed already
-if(!"readxl" %in% installed.packages()[ ,"Package"]) {
-  install.packages("readxl")
-} 
 library(readxl)
-
-# install rstatix if not installed already
-if(!"rstatix" %in% installed.packages()[ ,"Package"]) {
-  install.packages("rstatix")
-} 
 library(rstatix)
 
 ```
 
 ## Load Data
 
-The data used for this visualization is from my dissertation project that I completed last year. We collected data from 60 current University of Sheffield students in one individual session for each participant. The exclusion criterion was having a heart condition. The sample consisted exclusively of young adults.
+The data used for this visualization is from my dissertation project that I completed last year. We collected data from 60 current University of Sheffield students in one individual session for each participant. The exclusion criterion was having a heart condition. The sample consisted almost exclusively of young adults.
 
-ADHD traits were measured using section A from the Adult ADHD Self-Report Scale v1.1 (Kessler et al., 2005). This consists of six Likert scale questions that are answered on a scale from "strongly agree" to "strongly disagree". Participants are given either one point or zero points for each question based on their response. The responses are totalled out of six, where higher scores represent a higher level of ADHD traits. The ASRS data is in a spreadsheet containing all of the data that Qualtrics recorded for each individual participant.
+ADHD traits were measured using section A from the Adult ADHD Self-Report Scale v1.1 (Kessler et al., 2005). This consists of six Likert scale items that are answered on a scale from "strongly agree" to "strongly disagree". Participants are given either one point or zero points for each item based on their response. The responses are totalled out of six, in which higher scores represent a higher level of ADHD traits. The ASRS data is in a spreadsheet containing all of the data that Qualtrics recorded for each individual participant. Here is a link to the data in a google sheet: https://docs.google.com/spreadsheets/d/18VtUgG987tZLIG8mLXtAR5k2FWN836wPT-T5iGaddPc/edit?gid=0#gid=0 
 
-Physiological emotional response was conceptualized as heart rate and was measured using a finger pulse oximeter. Heart rate was measured before, during and after a negative emotion induction task. Before and during task heart rates were measured for two minutes and the after heart rate was measured for 30 seconds. There was always a researcher monitoring the measurement remotely through the ViHealth app as it was being recorded to check for problems with the oximeter. ViHealth automatically computed the average the heart rate for each individual measurement. These were saved and copied into an excel spreadsheet with the participant ID and notes detailing the time measured and any potential methodological problems.
+Physiological emotional response was conceptualized as heart rate and was measured using a finger pulse oximeter. Heart rate was measured before, during and after a negative emotion induction task. Before and during task heart rates were measured for two minutes and the after heart rate was measured for 30 seconds. There was always a researcher monitoring the measurement remotely through the ViHealth app as it was being recorded to check for problems with the oximeter. ViHealth automatically computed the average the heart rate for each individual measurement. These were saved and copied into an excel spreadsheet with the participant ID and notes detailing the time measured and any potential methodological problems.Here is a link to the data in a google sheet:  https://docs.google.com/spreadsheets/d/1zoV4IGYR2Lr7VZV4mJwCslphvym3yD8anXt7cJ_Yhjw/edit?gid=0#gid=0
 
-The task used was Cyberball (reference), which is a computerised ball toss game that simulates social exclusion. Previous research indicates that it reliably induces negative emotions (reference). It had good face validity within our study as many participants voiced their frustrations with the game.
+The task used to induce negative emotion was Cyberball (Williams et al., 2000). This is a computerized ball toss game that simulates social exclusion. Previous research indicates that it reliably induces negative emotions (Hartgerink et al., 2015). It had good face validity within our study as many participants voiced their frustrations with the game.
 
-```{r}
+```{r, message= FALSE}
 
 # load heart rate data
 
 filePath1= here("Data", "heart rate data.xlsx")
 heartRate= read_excel(filePath1)
-# heart rate data: https://docs.google.com/spreadsheets/d/1zoV4IGYR2Lr7VZV4mJwCslphvym3yD8anXt7cJ_Yhjw/edit?gid=0#gid=0
 
 # load Qualtrics data
 
 filePath2= here("Data", "qualtrics data.xlsx")
 ASRSscores= read_excel(filePath2)
-# Qualtrics data: https://docs.google.com/spreadsheets/d/18VtUgG987tZLIG8mLXtAR5k2FWN836wPT-T5iGaddPc/edit?gid=0#gid=0
 
 ```
 
 ## Wrangle Data
 
-Since the average heart rate over each time point for each participant was pre-calculated, this data did not require much pre-processing. Prior to combining the data, the main steps were to remove the notes and conduct sanity checks. The sanity checks of the maximum and minimum heart rate were somewhat ambiguous. Heart rate is highly variable between individuals, but the accepted normal range is between 60 and 100 beats per minute (BPM). A resting heart rate of below 40 or above 120 is considered to be a medical problem. The maximum BPM at baseline was 120, which is much higher than expected, especially as younger adults tend towards the lower end of the normal range. Therefore, this value is more likely to be due to nervousness than reflect a true baseline measure and thus this participant was excluded. The next highest baseline value was 104, which is close to the normal range. This value and similar values over 100 were included in the final sample in order to preserve individual variation. The maximum BPM values peri- and post-task were also much higher than the normal range at 135 and 132 respectively. These were not excluded because these were not baseline measurements and these values are plausible within the context of negative emotion induction. There was a minimum BPM value of 40 during the task. Whilst rare, this is plausible in physically active individuals, especially if they are young adults. Since this is not inherently medically concerning and no problems with the oximeter were noted during this trial, this participant was not removed.
+Since the average heart rate over each time point for each participant was pre-calculated, the heart rate data did not require much pre-processing. Prior to combining the data, the main steps were to remove the notes and conduct sanity checks. The sanity checks of the maximum and minimum heart rate were somewhat ambiguous. Heart rate is highly variable between individuals, but the accepted normal range is between 60 and 100 beats per minute (BPM). A resting heart rate of below 40 or above 120 is considered to be a medical problem. The maximum BPM at baseline was 120, which is much higher than expected, especially as younger adults tend towards the lower end of the normal range. Therefore, this value is more likely to be due to nervousness than a true baseline measure and thus this participant was excluded in later stages. The next highest baseline value was 104, which is close to the normal range. This value and similar values over 100 were included in the final sample in order to preserve individual variation. The maximum BPM values peri- and post-task were also much higher than the normal range at 135 and 132 respectively. These were not excluded because these were not baseline measurements and these values are plausible within the context of negative emotion induction. There was a minimum BPM value of 40 during the task. Whilst this is technically a plausible heart rate, it was noted that the heart rate dropped 20 BPM in just one second which may indicate a measurement error. This participant was removed at a later stage. The next lowest heart rate was 55 BPM post-task, which is a plausible heart rate.
 
-Most of the Qualtrics data is completely irrelevant, such as the IP address of the computer that it was completed on. Some of it was measured as part of the study but are not being used for the visualization, such as the subjective emotion scores. The ASRS scores were already been coded into points by Qualtrics, but these were untotalled. Irrelevant data and test responses were removed to only keep the participant ID and individual ASRS item scores for true participants.
+Most of the recorded Qualtrics data is irrelevant, such as the IP address of the laptop that it was completed on. Some of the data was measured as part of the study but are not being used for the visualization, such as the subjective emotion scores. The ASRS scores had already been coded into scores by Qualtrics, but these were untotalled. Firstly, irrelevant data and test responses were removed to only keep the participant ID and individual ASRS item scores for true participants. Secondly, some participant ID values were changed. There were a few instances in which the participants did not click submit and this went unnoticed. The response could still be submitted at a later date from whichever researcher's laptop it had been completed on. This means that the heart rate and Qualtrics data does not align properly in a couple of places. This was fixed by aligning the affected participant IDs in the ASRS scores data frame with the heart rate data. The ASRS scores were then totalled and individual scores were removed from the data frame. The sanity checks showed that all of the totalled ASRS values fell within the possible range (0-6), which indicates no computational errors. Scores of at least four were coded as high ADHD traits, as recommended by Kessler et al. (2005). Participants below this cut-off were coded as having low ADHD traits. Across the 60 participants, 33 were in the high ADHD traits group and 27 were in the low ADHD traits group.
 
-There were a few instances in which the participants did not click submit and this went unnoticed until a later date. The response could still be submitted from whichever researcher's laptop it had been completed on. This means that the heart rate and Qualtrics data does not align properly in a couple of places. This was fixed by changing the affected participant IDs in the ASRS scores data frame.
-
-The ASRS scores were then totalled and individual scores were removed from the data frame. The sanity checks showed that all of the totalled ASRS values fell within the possible range (0-6), which indicates no computational errors. Scores of at least four were coded as high ADHD traits, as recommended by Kessler et al. (2005). Participants below this cut-off were coded as having low ADHD traits. Across the 60 participants, 33 were in the high ADHD traits group and 27 were in the low ADHD traits group.
-
-The heart rate and Qualtrics data frames were then combined. The participant with the high baseline heart rate was removed at this stage alongside three additional participants with data collection problems. The final sample size was 56 participants. There were 31 participants in the high ADHD traits group and 25 in the low ADHD traits group. This means there was a roughly equal split between groups. Of the four participants that were removed, two were removed from each group. Finally, the mean and standard deviation (SD) was calculated for both groups within each time point.
+The heart rate and Qualtrics data frames were then combined. The participants discussed above were removed at this stage alongside three additional participants for data collection problems. The final sample size was 55 participants. There were 30 participants in the high ADHD traits group and 25 in the low ADHD traits group. This means there was a roughly equal split between groups. Of the five participants that were removed, two were removed from the low ADHD traits group and 3 from the high ADHD traits group. Finally, the mean and standard deviation (SD) was calculated for both groups within each time point.
 
 ```{r}
 
@@ -161,15 +132,16 @@ table(ASRSscores$ADHDtraits)
 # combine data frames
 combinedData= left_join(heartRate, ASRSscores, by= c("Participant")) %>%
   
-  # remove participant 1, 7, 9 and 25
-  slice(2:6, 8, 10:24, 26:60)
+  # remove participants 1, 7, 9, 25 and 57
+  slice(2:6, 8, 10:24, 26:56, 58:60)
 
 # total n and group split
 nrow(combinedData)
 table(combinedData$ADHDtraits)
 
-# new maximum baseline heart rate
+# new max and min BPM
 max(combinedData$HeartRate1)
+apply(combinedData, 2, range)
 
 # calculate pre-, peri- and post-task means and SDs for both groups
 groupedData= combinedData %>%
@@ -218,9 +190,7 @@ summariseData= left_join(meanData, SDdata, by= c("ADHDtraits",
 
 ## Visualise Data
 
-The visualization is a grouped bar graph showing the average heart rate for low and high ADHD trait groups across three time points. A bar chart was chosen because it is a clear way to show a difference between groups across a dependent variable. Furthermore, it is useful for displaying a within and a between participants independent variable in a single visualization. The participants are grouped by level of ADHD traits and both groups have a bar for before, during and after negative emotion induction. On the y axis is the mean heart rate in BPM. The y axis starts at 40 because this was the lowest heart rate recorded. Furthermore, values below this are representative of an unhealthy heart rate and thus are irrelevant to this study. Hover text was added to show the exact mean values of each bar to 2 decimal places. This was done because the scale is relatively large so the exact values are not visually clear. 
-
-The error bars show the range of values that were one SD away from the mean. This was added to acknowledge the high variability within the values and to potentially show differences in variability.
+The visualization is a grouped bar graph showing the mean heart rate for low and high ADHD trait groups before, during and after negative emotion induction. A bar chart was chosen because it is a clear way to show a difference between groups across a dependent variable. Furthermore, it is useful for displaying a within and a between participants independent variable in a single visualization. The participants are grouped by level of ADHD traits and both groups have a bar for each time point. On the y axis is the mean heart rate in BPM. The y axis starts at 55 because this was the lowest heart rate left in the sample. Values below this are thus irrelevant to the visualization. Hover text was added to show the exact mean values of each bar to 2 decimal places. This was done because the scale is relatively large so the exact values are not visually clear. The error bars show the range of values that were one SD away from the mean. This was added to acknowledge the high variability within the values and to potentially show differences in variability.
 
 ```{r}
 
@@ -250,14 +220,14 @@ HRchart= ggplot(summariseData, aes(x= ADHDtraits, y= HRmean,
   
   # add axis, legend and main titles
   xlab("Level of ADHD Traits") +
-  ylab("Mean BPM") +
+  ylab("Mean Beats Per Minute") +
   
   labs(fill = "Time Point") +
   
   ggtitle("Heart Rate Pre-, Peri- and Post-Negative Emotion Induction by   Level of ADHD Traits") +
   
-  # start y axis at 40
-  coord_cartesian(ylim = c(40, NA)) +
+  # start y axis at 55
+  coord_cartesian(ylim = c(55, NA)) +
   
   # change colours
   scale_fill_manual(values= redPalette) +
@@ -300,11 +270,10 @@ HRchart
 saveWidget(HRchart, file = file.path(output_folder, "HRchart.html"))
 
 ```
-## Interpretation of the Data
+## Interpret Data
 
-This data appears to show that there is no difference in physiological emotional response between high and low ADHD trait groups. This is because there is no clear difference in the change in bar heights across the three time points. This may show that there is no difference in autonomic nervous reactivity based on level of ADHD traits. However, neither group appeared to show a physiological response to Cyberball as there is minimal difference in the bar heights across the three time points within both groups. Therefore, these results may also show that Cyberball does not effectively induce a physiological reaction. 
-
-The only notable differences between the groups are the error bars peri- and post-task. Firstly, there is a greater variation in peri-task BPM in the high ADHD traits group than the low ADHD traits group. Secondly, there is a similar degree of variation between the groups post-task, but the high ADHD traits group tend towards a faster heart rate. These difference can likely be explained by heart rate values that are significantly different from the other values within the high ADHD traits group. As shown below, there are no pre-task outliers, two peri-task outliers and one post-task outlier. All of these outliers were found in the high ADHD traits group.
+This data appears to show that there is no difference in physiological response to negative emotion induction between high and low ADHD trait groups. This is because there is no clear difference in the change in bar heights across the three time points. This may show that there is no difference in autonomic nervous reactivity based on level of ADHD traits. However, neither group appeared to show a physiological response to Cyberball as there is minimal difference in the bar heights across the three time points within both groups. Therefore, these results may also show that Cyberball does not effectively induce a physiological reaction. 
+There are some differences between the groups. Firstly, the high ADHD traits groups has a higher mean BPM for all three time points. Since this is only a small difference, it may be due to chance. Secondly, there is greater variation in the high ADHD traits group peri- and post-task than in the low ADHD traits group. This can likely be explained by heart rate values that are significantly different from the other values within the high ADHD traits group. As shown below, there are no pre-task outliers, one peri-task outlier and one post-task outlier. Both outliers were from the same participant, who was in the high ADHD traits group. 
 
 ```{r}
 
@@ -314,29 +283,33 @@ The only notable differences between the groups are the error bars peri- and pos
 outliersBefore= combinedData %>%
   group_by(ADHDtraits) %>%
   identify_outliers(HeartRate1) %>%
-  select(-Participant, -HeartRate1, -HeartRate2)
+  select(-HeartRate2, -HeartRate3)
 print(outliersBefore)
 
 outliersDuring= combinedData %>%
   group_by(ADHDtraits) %>%
   identify_outliers(HeartRate2) %>%
-  select(-Participant, -HeartRate1, -HeartRate2)
+  select(-HeartRate1, -HeartRate3)
 print(outliersDuring)
 
 outliersAfter= combinedData %>%
   group_by(ADHDtraits) %>%
   identify_outliers(HeartRate3) %>%
-  select(-Participant, -HeartRate1, -HeartRate2)
+  select(-HeartRate1, -HeartRate2)
 print(outliersAfter)
 
 ```
 
-Outliers can increase the spread of the data, which then increases the SD. The fact that there is a high and low peri-task outlier in the high ADHD traits group could explain why there is a larger SD but a similar mean compared to the low ADHD traits group. Neither are extreme outliers,
-so they likely each cancelled out the other values impact on the mean. The high outlier in the post-task SD may explain why the variation tends towards a higher heart rate in the high ADHD traits group than the low ADHD traits group. This may have also lead to a higher mean value, although this would not be drastic as it is not an extreme outlier.
+Outliers can increase the spread of the data, which then increases the SD. The fact that there are high outliers peri- and post-task could explain why there is slightly more variation and why this variation tends towards higher heart rates in the high ADHD traits group than in the low ADHD traits group. This may have also lead to higher mean values, although this would not be dramatic as these are not extreme outliers. Furthermore, the impact of these outliers on the SD is likely more obvious because there was lower variability in the low ADHD traits group peri- and post-task compared to pre-task. This may be due to chance, or may indicate that there is lower variability in how adults with low ADHD traits respond to social exclusion compared to resting heart rate variability.
 
-The fact that there were no outliers in the low ADHD traits group may be due to chance or may indicate that extreme values are more common in those with high ADHD traits. However, there would need to be a much higher sample size to observe this in order to rule out chance. Therefore, it is difficult to say whether these values are a limitation of the data or characteristic of it.
+There are some clear limitations with the data. Firstly, the relatively small sample size and highly variable nature of heart rate means that there may not be enough participants for differences between groups to be noticeable. Group trends become more apparent with higher sample sizes as it becomes less likely that the mean and spread of the data are due to chance. Secondly, there may be a floor effect. Within both groups, there was not much change in heart rate between time points. This indicates that Cyberball did not induce a physiological response. The visualization cannot display a difference in physiological reactivity to negative emotion based on level of ADHD traits if there is no reaction to the task.
 
-There are some clear limitations with the data. Firstly, the small sample size and highly variable nature of heart rate means that there may not be enough participants for differences between groups to be noticeable. Group trends become more apparent with higher sample sizes as it becomes less likely that the mean and spread of the data are due to chance. Secondly, there may be a floor effect. Within both groups, there was not much change in heart rate between time points. There may be a difference in physiological emotion response based on level of ADHD traits but this visualization was unable to display it because the task did not induce this type of response.
+A possible direction for future research could be comparing adults with low ADHD traits to adults that have a diagnosis of and currently meet the diagnostic criteria for ADHD. It is possible that a higher degree of functional impairment is associated with higher reactivity. Another possible future direction could be to use a different physiological measure, such as skin conductance, as these may be more sensitive measures. 
 
-A possible direction for future research could be comparing adults with low ADHD traits to adults that have a diagnosis of and currently meet the diagnostic criteria for ADHD. Another possible future direction could be to use a different physiological measure, such as skin conductance, as these may be more sensitive measures. 
+## References
 
+Hartgerink, C. H. J., Van Beest, I., Wicherts, J. M., & Williams, K. D. (2015). The ordinal effects of ostracism: A meta-analysis of 120 cyberball studies. PloS One, 10(5), e0127002–e0127002. https://doi.org/10.1371/journal.pone.0127002
+  
+Kessler, R. C., Adler, L., Ames, M., Demler, O., Faraone, S., Hiripi, E., Howes, M. J., Jin, R., Secnik, K., Spencer, T., Ustun, T. B., & Walters, E. E. (2005). The World Health Organization adult ADHD self-report scale (ASRS): a short screening scale for use in the general population. Psychological Medicine, 35(2), 245–256. https://doi.org/10.1017/S0033291704002892 
+
+Williams, K. D., Cheung, C. K. T., & Choi, W. (2000). Cyberostracism: Effects of Being Ignored Over the Internet. Journal of Personality and Social Psychology, 79(5), 748–762. https://doi.org/10.1037/0022-3514.79.5.748
